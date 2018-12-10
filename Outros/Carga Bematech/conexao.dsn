@@ -1,0 +1,8 @@
+[ODBC]
+DRIVER=SQL Native Client
+UID=polipartes
+DATABASE=ABACOS
+WSID=WEB2
+APP=Microsoft® Access
+SERVER=SERVER01\SQLEXPRESS
+Description=Conexao Abacos
