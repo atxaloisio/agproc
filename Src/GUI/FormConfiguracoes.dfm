@@ -4,8 +4,8 @@ object frmConfiguracoes: TfrmConfiguracoes
   BorderIcons = [biMinimize]
   BorderStyle = bsSingle
   Caption = 'Configura'#231#245'es'
-  ClientHeight = 351
-  ClientWidth = 471
+  ClientHeight = 355
+  ClientWidth = 487
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -23,7 +23,7 @@ object frmConfiguracoes: TfrmConfiguracoes
   object GroupBox1: TGroupBox
     Left = 0
     Top = 0
-    Width = 471
+    Width = 487
     Height = 136
     Align = alTop
     Caption = 'Descritors Predefinidos'
@@ -180,7 +180,7 @@ object frmConfiguracoes: TfrmConfiguracoes
   object GroupBox2: TGroupBox
     Left = 0
     Top = 203
-    Width = 471
+    Width = 487
     Height = 112
     Align = alTop
     Caption = 'Conex'#227'o com Banco de Dados Millennium Business (Firebird)'
@@ -318,11 +318,10 @@ object frmConfiguracoes: TfrmConfiguracoes
   object GroupBox3: TGroupBox
     Left = 0
     Top = 136
-    Width = 471
+    Width = 487
     Height = 67
     Align = alTop
-    Caption = 'Carga Bematech'
-    Enabled = False
+    Caption = 'Logs de importa'#231#227'o'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clNavy
     Font.Height = -11
@@ -330,14 +329,12 @@ object frmConfiguracoes: TfrmConfiguracoes
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 4
-    Visible = False
     object Label7: TLabel
       Left = 9
       Top = 16
-      Width = 187
+      Width = 176
       Height = 13
-      Caption = 'Nome do arquivo tempor'#225'rio do Access'
-      Enabled = False
+      Caption = 'Pasta destino de Logs de importa'#231#227'o'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlack
       Font.Height = -11
@@ -345,12 +342,11 @@ object frmConfiguracoes: TfrmConfiguracoes
       Font.Style = []
       ParentFont = False
     end
-    object edtArquivoAccess: TEdit
+    object edtDestinoLogsImportacao: TEdit
       Left = 9
       Top = 35
       Width = 418
       Height = 21
-      Enabled = False
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlack
       Font.Height = -11
@@ -365,9 +361,8 @@ object frmConfiguracoes: TfrmConfiguracoes
       Top = 34
       Width = 29
       Height = 24
-      Enabled = False
       TabOrder = 1
-      OnClick = btnSelPastaOrigemClick
+      OnClick = btnSelArquivoAccessClick
       Glyph.Data = {
         36030000424D3603000000000000360000002800000010000000100000000100
         18000000000000030000C40E0000C40E00000000000000000000FFFFFFFFFFFF
@@ -398,10 +393,5 @@ object frmConfiguracoes: TfrmConfiguracoes
       Margin = 3
       Spacing = 0
     end
-  end
-  object dlgSelArquivoAccess: TOpenDialog
-    DefaultExt = '*.mdb'
-    Left = 400
-    Top = 168
   end
 end

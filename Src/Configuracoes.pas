@@ -11,6 +11,7 @@ interface
         // Descritores Predefinidos - Planilhas
         fPastaOrigem: String;
         fPastaDestino: String;
+        fPastaLogs: String;
         fMoverArquivos: Boolean;
         // Banco de dados
         fServidor: String;
@@ -22,6 +23,7 @@ interface
       Public
         Property PastaOrigem : String read fPastaOrigem write fPastaOrigem;
         Property PastaDestino: String read fPastaDestino write fPastaDestino;
+        Property PastaLogs: String read fPastaLogs write fPastaLogs;
         Property MoverArquivos: Boolean read fMoverArquivos write fMoverArquivos;
         Property Servidor: String read fServidor write fServidor;
         Property Banco: String read fBanco write fBanco;
@@ -49,12 +51,13 @@ begin
 
       Self.fPastaOrigem := ini.ReadString('planilhas','pasta_origem','');
       Self.fPastaDestino := ini.ReadString('planilhas','pasta_destino','');
+      Self.fPastaLogs := ini.ReadString('planilhas','pasta_logs','');
       Self.fMoverArquivos := ini.ReadString('planilhas','mover_apos_processar','') = 'S';
 
       Self.fServidor := ini.ReadString('banco','servidor','');
-      Self.fBanco := Cripto(ini.ReadString('banco','banco',''),'N');
-      Self.fUsuario := Cripto(ini.ReadString('banco','usuario',''),'N');
-      Self.fSenha := Cripto(ini.ReadString('banco','senha',''),'N');
+      Self.fBanco := ini.ReadString('banco','banco','');
+      Self.fUsuario := ini.ReadString('banco','usuario','');
+      Self.fSenha := ini.ReadString('banco','senha','');
 
       Self.fArquivoAccess := ini.ReadString('carga_bematech','arquivo_access','');
 
@@ -82,6 +85,7 @@ begin
 
       ini.WriteString('planilhas', 'pasta_origem', Self.fPastaOrigem + barra);
       ini.WriteString('planilhas', 'pasta_destino', Self.fPastaDestino + barra);
+      ini.WriteString('planilhas', 'pasta_logs', Self.fPastaLogs + barra);
 
       if fMoverArquivos then
         ini.WriteString('planilhas','mover_apos_processar', 'S')
@@ -89,9 +93,9 @@ begin
         ini.WriteString('planilhas','mover_apos_processar', 'N');
 
       ini.WriteString('banco','servidor', Self.fServidor);
-      ini.WriteString('banco','banco', Cripto(Self.fBanco,'S'));
-      ini.WriteString('banco','usuario', Cripto(Self.fUsuario,'S'));
-      ini.WriteString('banco','senha', Cripto(Self.fSenha,'S'));
+      ini.WriteString('banco','banco', Self.fBanco);
+      ini.WriteString('banco','usuario', Self.fUsuario);
+      ini.WriteString('banco','senha', Self.fSenha);
 
       ini.WriteString('carga_bematech', 'arquivo_access', Self.fArquivoAccess);
 

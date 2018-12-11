@@ -8,13 +8,13 @@ interface
       Private
           fNome: String;
           fSituacao: String;
-          fCodigoAbacos: Integer;
+          fCodigo: Integer;
       Public
           Constructor Create (nome: String);
           Destructor Destroy;
           Property Nome: String read fNome write fNome;
           Property Situacao: String read fSituacao write fSituacao;
-          Property CodigoAbacos: Integer read fCodigoAbacos write fCodigoAbacos;
+          Property Codigo: Integer read fCodigo write fCodigo;
     End;
 
 implementation
@@ -25,14 +25,14 @@ constructor TModelo.Create (nome: String);
 begin
   Self.fNome := nome;
   Self.fSituacao := '1';
-  Self.fCodigoAbacos := -2
+  Self.fCodigo := -2
 end;
 
 destructor TModelo.Destroy;
 begin
   Self.fNome := '';
   Self.fSituacao := '';
-  Self.fCodigoAbacos := 0;
+  Self.fCodigo := 0;
 end;
 
 end.

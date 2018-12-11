@@ -1,10 +1,11 @@
 object DM: TDM
   OldCreateOrder = False
-  Left = 489
-  Top = 188
+  Left = 237
+  Top = 121
   Height = 537
-  Width = 619
+  Width = 1134
   object dbExcel: TADOConnection
+    ConnectionString = 'Provider=MSDASQL;Persist Security Info=False;'
     ConnectionTimeout = 900
     LoginPrompt = False
     Left = 32
@@ -14,7 +15,7 @@ object DM: TDM
     Connection = dbExcel
     Parameters = <>
     SQL.Strings = (
-      'select * from "1$"')
+      'select * from _xlnm#_FilterDatabase')
     Left = 152
     Top = 16
   end
@@ -28,7 +29,7 @@ object DM: TDM
     Left = 32
     Top = 72
   end
-  object qryBuscaCodigoDescritor: TADOQuery
+  object qryBuscaCodigoDescritor_: TADOQuery
     Connection = dbSQLServer
     CursorType = ctStatic
     Parameters = <
@@ -47,7 +48,7 @@ object DM: TDM
     Left = 152
     Top = 72
   end
-  object qryBuscaCodigoProduto: TADOQuery
+  object qryBuscaCodigoProduto_: TADOQuery
     Connection = dbSQLServer
     CursorType = ctStatic
     Parameters = <
@@ -66,7 +67,7 @@ object DM: TDM
     Left = 152
     Top = 120
   end
-  object qryBuscaProdutoDescritor: TADOQuery
+  object qryBuscaProdutoDescritor_: TADOQuery
     Connection = dbSQLServer
     CursorType = ctStatic
     Parameters = <
@@ -153,7 +154,7 @@ object DM: TDM
     Left = 312
     Top = 72
   end
-  object qryInserirRelacaoDescritorProduto: TADOQuery
+  object qryInserirRelacaoDescritorProduto_: TADOQuery
     Connection = dbSQLServer
     Parameters = <
       item
@@ -565,7 +566,7 @@ object DM: TDM
       'DriverName=UIB FireBird15'
       'BlobSize=-1'
       'CommitRetain=False'
-      'Database=localhost:c:\Sys\Base\MILLENIUM'
+      'Database=localhost/3050:c:\Sys\Base\MILLENIUM'
       'ErrorResourceFile='
       'LocaleCode=0000'
       'Password=masterkey'
@@ -578,5 +579,33 @@ object DM: TDM
     VendorLib = 'fbclient.dll'
     Left = 304
     Top = 240
+  end
+  object qryBuscaCodigoDescritor: TSQLQuery
+    MaxBlobSize = -1
+    Params = <>
+    SQLConnection = dbFirebird
+    Left = 448
+    Top = 240
+  end
+  object qryBuscaCodigoProduto: TSQLQuery
+    MaxBlobSize = -1
+    Params = <>
+    SQLConnection = dbFirebird
+    Left = 448
+    Top = 296
+  end
+  object qryBuscaProdutoDescritor: TSQLQuery
+    MaxBlobSize = -1
+    Params = <>
+    SQLConnection = dbFirebird
+    Left = 448
+    Top = 352
+  end
+  object qryInserirRelacaoDescritorProduto: TSQLQuery
+    MaxBlobSize = -1
+    Params = <>
+    SQLConnection = dbFirebird
+    Left = 608
+    Top = 80
   end
 end

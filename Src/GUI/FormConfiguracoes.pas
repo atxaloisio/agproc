@@ -29,15 +29,15 @@ type
     edtBanco: TEdit;
     GroupBox3: TGroupBox;
     Label7: TLabel;
-    edtArquivoAccess: TEdit;
+    edtDestinoLogsImportacao: TEdit;
     btnSelArquivoAccess: TBitBtn;
-    dlgSelArquivoAccess: TOpenDialog;
     procedure btnCancelarClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure btnSalvarClick(Sender: TObject);
     procedure btnSelPastaOrigemClick(Sender: TObject);
     procedure btnSelPastaDestinoClick(Sender: TObject);
+    procedure btnSelArquivoAccessClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -62,12 +62,13 @@ procedure TfrmConfiguracoes.btnSalvarClick(Sender: TObject);
 begin
   Configuracao.PastaOrigem := edtPastaOrigem.Text;
   Configuracao.PastaDestino := edtPastaDestino.Text;
+  Configuracao.PastaLogs := edtDestinoLogsImportacao.Text;
   Configuracao.MoverArquivos := chkMoverArquivos.Checked;
   Configuracao.Servidor := edtServidor.Text;
   Configuracao.Usuario := edtUsuario.Text;
   Configuracao.Senha := edtSenha.Text;
   Configuracao.Banco := edtBanco.Text;
-  Configuracao.ArquivoAccess := edtArquivoAccess.Text;
+//  Configuracao.ArquivoAccess := edtArquivoAccess.Text;
 
   if Not Configuracao.SalvarConfiguracoes then
     MessageDlg ('Erro na gravação do arquivo de configuração.', mtError, [mbOk], 0);
@@ -108,12 +109,24 @@ procedure TfrmConfiguracoes.FormCreate(Sender: TObject);
 begin
   edtPastaOrigem.Text := Configuracao.PastaOrigem;
   edtPastaDestino.Text := Configuracao.PastaDestino;
+  edtDestinoLogsImportacao.Text := Configuracao.PastaLogs;
   chkMoverArquivos.Checked := Configuracao.MoverArquivos;
   edtServidor.Text := Configuracao.Servidor;
   edtUsuario.Text := Configuracao.Usuario;
   edtSenha.Text := Configuracao.Senha;
   edtBanco.Text := Configuracao.Banco;
-  edtArquivoAccess.Text := Configuracao.ArquivoAccess;
+//  edtArquivoAccess.Text := Configuracao.ArquivoAccess;
+end;
+
+procedure TfrmConfiguracoes.btnSelArquivoAccessClick(Sender: TObject);
+begin
+  try
+    frmSelecionarDiretorio := TfrmSelecionarDiretorio.Create(Application);
+    if frmSelecionarDiretorio.Selecionar then
+      edtDestinoLogsImportacao.Text :=  frmSelecionarDiretorio.Diretorio;
+  finally
+    FreeAndNil(frmSelecionarDiretorio);
+  end;
 end;
 
 end.

@@ -4,8 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, CheckLst, Hashes, ComCtrls, ExtCtrls, Grids, Constantes,
-  DB, ADODB;
+  Dialogs, StdCtrls, CheckLst, Hashes, ComCtrls, ExtCtrls, Grids, Constantes, DB,
+  ADODB, SqlExpr, DBXpress;
 
 type
   TfrmModelosXPecas = class(TForm)
@@ -24,35 +24,16 @@ type
     btnCancelar: TButton;
     btnProcessar: TButton;
     GroupBox3: TGroupBox;
-    Label4: TLabel;
-    Label5: TLabel;
-    Label6: TLabel;
     Label7: TLabel;
-    Label8: TLabel;
-    Label9: TLabel;
     GroupBox2: TGroupBox;
     ckbPecasSemModelos: TCheckBox;
-    Label10: TLabel;
     ckbProcessesarSelecionado: TCheckBox;
     ckbProdutosNaoCadastrados: TCheckBox;
     ckbLimitarLista: TCheckBox;
     edtQtdLinhas: TEdit;
-    rbtDestino: TRadioGroup;
     GroupBox4: TGroupBox;
-    Label11: TLabel;
-    Label12: TLabel;
-    Label13: TLabel;
     label50: TLabel;
-    Label15: TLabel;
-    Label16: TLabel;
-    Label17: TLabel;
-    lblCPD: TLabel;
-    lblDNC: TLabel;
-    lblDNP: TLabel;
     lblPNC: TLabel;
-    lblCDD: TLabel;
-    lblDDP: TLabel;
-    lblDEP: TLabel;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure btnLerArquivoClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -74,16 +55,16 @@ type
     cancelou: Boolean;
     linhaSelecionada: Longint;
     recarregarPlanilhas: Boolean;
-
     procedure ListarArquivos(Diretorio: string; Sub: Boolean);
     function TemAtributo(Attr, Val: Integer): Boolean;
-
     function PegarCodigoDescritor(nDesc: Integer; nomeDescritor: string; var codigoObtido: Integer): string;
-    function PegarCodigoProduto(nDesc: Integer; codExtProduto: string; var codigoObtido: Integer): string;
-    function PegarProdutoAssociadoDescritor(nDesc: Integer; codProdutoAbacos, codDescritor: Integer): string;
+    function PegarCodigoProduto(codExtProduto: string; var codigoObtido: Integer): string;
+    function PegarProdutoAssociadoDescritor(codProduto, codDescritor: Integer): Integer;
     function InserirNovoDescritor(nDesc: Integer; nomeDescritor: string; var codigoNovoDescritor: Integer): Boolean;
-    function InserirRelacaoProdutoDescritor(nDesc: Integer; codigoProduto, codigoDescritor: Integer): Boolean;
+    function InserirRelacaoProdutoDescritor(codigoProduto, codigoDescritor: Integer; modelos: string): Boolean;
+    function AtualizaRelacaoProdutoDescritor(codigoModelo: Integer; modelos: string): Boolean;
     function InserirDEEPR(nDesc: Integer; codigoProduto: Integer; nomeDescritor: string): Boolean;
+    procedure MoverPlanilhasProcessadas;
   public
     { Public declarations }
   end;
@@ -93,7 +74,8 @@ var
 
 implementation
 
-uses DataModule, Configuracoes, Peca, ADOInt, Modelo;
+uses
+  DataModule, Configuracoes, Peca, ADOInt, Modelo;
 
 {$R *.dfm}
 
@@ -113,7 +95,8 @@ begin
 end;
 
 procedure TfrmModelosXPecas.btnLerArquivoClick(Sender: TObject);
-var peca: TProduto;
+var
+  peca: TProduto;
   codigo, descricao, modelos, nomeArquivo, legenda, sitDescXProduto: string;
   NodePeca: TTreeNode;
   t, linha, coluna, nPlan, a, nCampo, codDescritor, x, codigoProduto: Integer;
@@ -125,8 +108,20 @@ var peca: TProduto;
   qtdArqChecado, q, nDescritor: Integer;
   nomeModeloAux: string;
   qtdPNC, qtdCPD, qtdDNC, qtdCDD, qtdDNP, qtdDEP, qtdDDP: Integer;
+  log: TextFile;
+  nomelog: string;
 begin
   cancelou := False;
+
+  nomelog := 'LOG_IMPORTACAO_' + StringReplace(DateTimeToStr(Now), '/', '_', [rfReplaceAll, rfIgnoreCase]);
+  nomelog := StringReplace(nomelog, ' ', '_', [rfReplaceAll, rfIgnoreCase]);
+  nomelog := StringReplace(nomelog, ':', '', [rfReplaceAll, rfIgnoreCase]);
+
+  if Configuracao.PastaLogs = '' then
+    Configuracao.PastaLogs := ExtractFilePath(Application.ExeName);
+
+  AssignFile(log, Configuracao.PastaLogs + nomelog);
+  Rewrite(log);
 
   qtdPNC := 0;
   qtdCPD := 0;
@@ -149,20 +144,8 @@ begin
 
   if qtdArqChecado > 1 then
   begin
-    MessageDlg('Nesta versão inicial, por questões de segurança, está desabilitado o processamento de múltiplos arquivos.',
-      mtInformation, [mbOk], 0);
+    MessageDlg('Nesta versão inicial, por questões de segurança, está desabilitado o processamento de múltiplos arquivos.', mtInformation, [mbOk], 0);
     Exit;
-  end;
-
-  if rbtDestino.ItemIndex = -1 then
-  begin
-    MessageDlg('Selecione o descritor de destino', mtInformation, [mbOk], 0);
-    Exit;
-  end
-  else
-  begin
-    nDescritor := rbtDestino.ItemIndex + 1;
-    rbtDestino.Enabled := False;
   end;
 
   clbArquivos.Enabled := False;
@@ -220,7 +203,8 @@ begin
       for t := 0 to clbArquivos.Count - 1 do
       begin
 
-        if not clbArquivos.Checked[t] then Continue;
+        if not clbArquivos.Checked[t] then
+          Continue;
 
         // Limpar descritores encontrados no processamento anterior, podem ser diferentes...
 
@@ -264,7 +248,7 @@ begin
 
         Grid.Ctl3D := False;
 
-        Grid.ColCount := 2;
+        Grid.ColCount := 3;
         Grid.RowCount := 1;
 
         Grid.ColWidths[0] := 100;
@@ -272,6 +256,9 @@ begin
 
         Grid.ColWidths[1] := 350;
         Grid.Cells[1, 0] := 'Descrição';
+
+        Grid.ColWidths[2] := 450;
+        Grid.Cells[2, 0] := 'Modelos';
 
         linha := 1;
 
@@ -323,24 +310,36 @@ begin
                 end;
 
                 codigo := qryPlanilha.Fields.FieldByNumber(1).AsString;
-                descricao := qryPlanilha.Fields.FieldByNumber(2).AsString;
+                descricao := Trim(qryPlanilha.Fields.FieldByNumber(2).AsString);
                 modelos := qryPlanilha.Fields.FieldByNumber(3).AsString;
 
                 peca := TProduto.Create(codigo, descricao, modelos);
 
-                peca.Situacao := PegarCodigoProduto(nDescritor, peca.CodigoExterno, codigoProduto);
+                peca.Situacao := PegarCodigoProduto(peca.CodigoExterno, codigoProduto);
 
-                peca.CodigoAbacos := codigoProduto;
+                peca.Codigo := codigoProduto;
+
+                peca.Descricao := descricao;
+
+                peca.Modelos := modelos;
 
                 peca.CodigoExterno := peca.Situacao + peca.CodigoExterno;
+
+                if codigoProduto > 0 then
+                  peca.CodigoModelo := PegarProdutoAssociadoDescritor(codigoProduto, 7);
 
                 // Acumular totalizadores
 
                 if peca.Situacao = produtoNaoCadastrado then
-                  Inc(qtdPNC)
+                begin
+                  Inc(qtdPNC);
+                  Writeln(log, 'Codigo: ' + peca.CodigoExterno + ' não cadastrado.');
+                end
                 else if peca.Situacao = cadastroProdutoDuplicado then
+                begin
                   Inc(qtdCPD);
-
+                  Writeln(log, 'Codigo: ' + peca.CodigoExterno + ' duplicado no sistema');
+                end;
 
                 if (peca.Situacao = produtoNaoCadastrado) and (not ckbProdutosNaoCadastrados.Checked) then
                   FreeAndNil(peca)
@@ -356,74 +355,16 @@ begin
                     for nCampo := 4 to qryPlanilha.Fields.Count - 1 do
                     begin
                       nomeModeloAux := Trim(qryPlanilha.Fields.FieldByNumber(nCampo).AsString);
-                      if (Length(nomeModeloAux) > 0) then
-                      begin
-                        m1 := TModelo.Create(nomeModeloAux);
-                        peca.AdicionaModelo(m1);
-                      end;
+                      peca.Modelos := peca.Modelos + ', ' + nomeModeloAux;
                     end;
 
                   (* Fim de tratamento especial *)
 
-                  if (peca.Modelos.Count > 0) or (not ckbPecasSemModelos.Checked) then
+                  if (peca.Modelos <> '') or (not ckbPecasSemModelos.Checked) then
                   begin
                     Grid.Cells[0, linha] := peca.CodigoExterno;
                     Grid.Cells[1, linha] := peca.Descricao;
-
-                    if Grid.ColCount < (peca.Modelos.Count + 2) then
-                    begin
-                      Grid.ColCount := peca.Modelos.Count + 2;
-                      for a := 2 to Grid.ColCount - 1 do
-                      begin
-                        Grid.Cells[a, 0] := 'Descritor';
-                        Grid.ColWidths[a] := 130;
-                      end;
-                    end;
-
-                    for a := 0 to peca.Modelos.Count - 1 do
-                    begin
-                      coluna := a + 2;
-
-                      // Se a situação do produto está correta, pesquisar o descritor
-                      if peca.Situacao = correto then
-                      begin
-                        TModelo(peca.Modelos.Items[a]).Situacao := PegarCodigoDescritor(nDescritor, TModelo(peca.Modelos.Items[a]).Nome, codDescritor);
-                        TModelo(peca.Modelos.Items[a]).CodigoAbacos := codDescritor;
-
-                        // Acumular totalizadores
-
-                        if TModelo(peca.Modelos.Items[a]).Situacao = descritorNaoCadastrado then
-                          Inc(qtdDNC)
-                        else if TModelo(peca.Modelos.Items[a]).Situacao = cadastroDescritorDuplicado then
-                          Inc(qtdCDD)
-                        else if TModelo(peca.Modelos.Items[a]).Situacao = descritorNaoExisteParaProduto then
-                          Inc(qtdDNP)
-                        else if TModelo(peca.Modelos.Items[a]).Situacao = descritorJaExisteParaProduto then
-                          Inc(qtdDEP);
-
-                        // Se a situação cadastral do descritor está correta, pesquisar a associação com o produto
-                        if TModelo(peca.Modelos.Items[a]).Situacao = correto then
-                        begin
-                          sitDescXProduto := PegarProdutoAssociadoDescritor(nDescritor, peca.CodigoAbacos, TModelo(peca.Modelos.Items[a]).CodigoAbacos);
-
-                          // Acumular totalizadores
-
-                          if sitDescXProduto = descritorDuplicadoParaProduto then
-                            Inc(qtdDDP);
-
-                          if sitDescXProduto <> correto then
-                            TModelo(peca.Modelos.Items[a]).Situacao := sitDescXProduto;
-                        end;
-
-                      end
-                      else
-                        // Se não estiver correta, atribui a mesma situação do produto, apenas para colorir a célula igualmente
-                        TModelo(peca.Modelos.Items[a]).Situacao := peca.Situacao;
-
-                      Grid.Cells[coluna, linha] := TModelo(peca.Modelos.Items[a]).Situacao +
-                        TModelo(peca.Modelos.Items[a]).Nome;
-                    end;
-
+                    Grid.Cells[2, linha] := peca.Modelos;
                     Grid.RowCount := Grid.RowCount + 1;
 
                     Inc(linha);
@@ -452,9 +393,9 @@ begin
 
         //clbArquivos.Checked[t] := False;
 
-        listaGrades.Add(grid);
+        listaGrades.Add(Grid);
 
-        grid.Visible := True;
+        Grid.Visible := True;
 
         listaListas.Add(lista);
 
@@ -464,12 +405,12 @@ begin
       recarregarPlanilhas := False;
 
       lblPNC.Caption := IntToStr(qtdPNC);
-      lblCPD.Caption := IntToStr(qtdCPD);
-      lblDNC.Caption := IntToStr(qtdDNC);
-      lblCDD.Caption := IntToStr(qtdCDD);
-      lblDNP.Caption := IntToStr(qtdDNP);
-      lblDEP.Caption := IntToStr(qtdDEP);
-      lblDDP.Caption := IntToStr(qtdDDP);
+//      lblCPD.Caption := IntToStr(qtdCPD);
+//      lblDNC.Caption := IntToStr(qtdDNC);
+//      lblCDD.Caption := IntToStr(qtdCDD);
+//      lblDNP.Caption := IntToStr(qtdDNP);
+//      lblDEP.Caption := IntToStr(qtdDEP);
+//      lblDDP.Caption := IntToStr(qtdDDP);
 
     except
       on e: Exception do
@@ -479,51 +420,56 @@ begin
       end;
     end;
   finally
+    Flush(log);
+    CloseFile(log);
     dm.qryPlanilha.Close;
     panProgresso.Visible := False;
     btnLerArquivo.Enabled := True;
     Screen.Cursor := crDefault;
     if cancelou then
     begin
-      listaGrades.Add(grid);
+      listaGrades.Add(Grid);
       listaListas.Add(lista);
       listaPlanihas.Add(clbArquivos.Items.Strings[t]);
-      grid.Visible := True;
+      Grid.Visible := True;
       MessageDlg('Cancelado pelo usuário!', mtInformation, [mbOk], 0);
     end
     else if not ocorreuErro then
+    begin
+      DM.DesconectaExcel;
       MessageDlg('Concluído!', mtInformation, [mbOk], 0)
+    end
     else
       MessageDlg('Concluído sem sucesso!', mtError, [mbOk], 0);
   end;
 end;
 
 procedure TfrmModelosXPecas.btnProcessarClick(Sender: TObject);
-var nLista, nModelo, codigoNovo, nDescritor: integer;
+var
+  nLista, nModelo, codigoNovo, nDescritor: integer;
   nProduto, nInicial, nFinal: Longint;
   listaAtual: TList;
   modelo: TModelo;
   produto: TProduto;
   ocorreuErro: Boolean;
+  Trans : TTransactionDesc;
 begin
   try
     try
       if MessageDlg('Iniciar o processamento da planilha ?', mtConfirmation, [mbYes, mbNo], 0) = mrNo then
         Exit;
 
-      cancelou := False;
+       cancelou := False;
 
       if listaListas.Count = 0 then
       begin
-        MessageDlg('A lista de processamento está vazia. Carregue um arquivo.',
-          mtWarning, [mbOk], 0);
+        MessageDlg('A lista de processamento está vazia. Carregue um arquivo.', mtWarning, [mbOk], 0);
         Exit;
       end;
 
       if (ckbProcessesarSelecionado.Checked) and (linhaSelecionada <= 0) then
       begin
-        MessageDlg('Caso escolha processar somente a linha selecionada, você deve clicar na linha desejada.',
-          mtWarning, [mbOk], 0);
+        MessageDlg('Caso escolha processar somente a linha selecionada, você deve clicar na linha desejada.', mtWarning, [mbOk], 0);
         Exit;
       end;
 
@@ -545,7 +491,7 @@ begin
 
       ocorreuErro := False;
 
-      nDescritor := rbtDestino.ItemIndex + 1;
+      nDescritor := 7; //codigo atual da especificacao modelo
 
       for nLista := 0 to listaListas.Count - 1 do
       begin
@@ -590,29 +536,46 @@ begin
           // Se a situacao do produto está correta . . . processar . . .
           if produto.Situacao = correto then
           begin
-            for nModelo := 0 to produto.Modelos.Count - 1 do
+            Trans.TransactionID := 1;
+            Trans.IsolationLevel := xilREADCOMMITTED;
+            if produto.CodigoModelo = 0 then
             begin
-              modelo := TModelo(produto.Modelos.Items[nModelo]);
+              //se não temos a associação espec_prod vamos inserir
 
-              // Se a situacao do modelo for "DNC - Descritor não cadastrado", cadastrar um novo então . . .
-              if (modelo.Situacao = descritorNaoCadastrado) then
-              begin
-                codigoNovo := 0;
-                if InserirNovoDescritor(nDescritor, modelo.Nome, codigoNovo) then
-                begin
-                  modelo.Situacao := correto;
-                  modelo.CodigoAbacos := codigoNovo;
-                end;
-              end;
-
-              // Se a situacao do modelo for correta, inserir a associacao modelo x produto
-              if modelo.Situacao = correto then
-              begin
-                InserirRelacaoProdutoDescritor(nDescritor, produto.CodigoAbacos, modelo.CodigoAbacos);
-                InserirDEEPR(nDescritor, produto.CodigoAbacos, modelo.Nome);
-              end;
-
+              DM.dbFirebird.StartTransaction(Trans);
+              if InserirRelacaoProdutoDescritor(produto.Codigo, 7, produto.Modelos) then
+                produto.CodigoModelo := PegarProdutoAssociadoDescritor(produto.Codigo, 7);
+              DM.dbFirebird.Commit(Trans);
+            end
+            else
+            begin
+              DM.dbFirebird.StartTransaction(Trans);
+              AtualizaRelacaoProdutoDescritor(produto.CodigoModelo, produto.Modelos);
+              DM.dbFirebird.Commit(Trans);
             end;
+//            for nModelo := 0 to produto.Modelos.Count - 1 do
+//            begin
+//              modelo := TModelo(produto.Modelos.Items[nModelo]);
+//
+//              // Se a situacao do modelo for "DNC - Descritor não cadastrado", cadastrar um novo então . . .
+//              if (modelo.Situacao = descritorNaoCadastrado) then
+//              begin
+//                codigoNovo := 0;
+//                if InserirNovoDescritor(nDescritor, modelo.Nome, codigoNovo) then
+//                begin
+//                  modelo.Situacao := correto;
+//                  modelo.Codigo := codigoNovo;
+//                end;
+//              end;
+//
+//              // Se a situacao do modelo for correta, inserir a associacao modelo x produto
+//              if modelo.Situacao = correto then
+//              begin
+//                InserirRelacaoProdutoDescritor(nDescritor, produto.Codigo, modelo.Codigo);
+//                InserirDEEPR(nDescritor, produto.Codigo, modelo.Nome);
+//              end;
+//
+//            end;
           end;
           pbProcessamento.Position := pbProcessamento.Position + 1;
           Application.ProcessMessages;
@@ -621,6 +584,7 @@ begin
     except
       on e: Exception do
       begin
+        DM.dbFirebird.Rollback(Trans);
         ocorreuErro := True;
         raise Exception.Create('Erro ao processar planilhas: ' + e.Message);
       end;
@@ -648,27 +612,19 @@ procedure TfrmModelosXPecas.DrawCell(Sender: TObject; ACol, ARow: Integer; Rect:
 begin
   with (Sender as TStringGrid) do
   begin
-    if ((Pos(cadastroProdutoDuplicado, Cells[aCol, aRow]) > 0) or
-      (Pos(cadastroDescritorDuplicado, Cells[aCol, aRow]) > 0) or
-      (Pos(descritorDuplicadoParaProduto, Cells[aCol, aRow]) > 0)) then
-
+    if ((Pos(cadastroProdutoDuplicado, Cells[ACol, ARow]) > 0) or (Pos(cadastroDescritorDuplicado, Cells[ACol, ARow]) > 0) or (Pos(descritorDuplicadoParaProduto, Cells[ACol, ARow]) > 0)) then
       Canvas.Font.Color := clRed
 
-    else if (Pos(produtoNaoCadastrado, Cells[aCol, aRow]) > 0) then
-
+    else if (Pos(produtoNaoCadastrado, Cells[ACol, ARow]) > 0) then
       Canvas.Font.Color := clMaroon
 
-    else if ((Pos(descritorNaoCadastrado, Cells[aCol, aRow]) > 0) or
-      (Pos(descritorNaoExisteParaProduto, Cells[aCol, aRow]) > 0)) then
-
+    else if ((Pos(descritorNaoCadastrado, Cells[ACol, ARow]) > 0) or (Pos(descritorNaoExisteParaProduto, Cells[ACol, ARow]) > 0)) then
       Canvas.Font.Color := clGreen
 
-    else if (Pos(descritorJaExisteParaProduto, Cells[aCol, aRow]) > 0) then
-
+    else if (Pos(descritorJaExisteParaProduto, Cells[ACol, ARow]) > 0) then
       Canvas.Font.Color := clBlue;
 
-
-    Canvas.TextRect(Rect, Rect.Left + 2, Rect.Top + 2, cells[acol, arow]);
+    Canvas.TextRect(Rect, Rect.Left + 2, Rect.Top + 2, cells[ACol, ARow]);
     Canvas.FrameRect(Rect);
   end;
 end;
@@ -682,16 +638,17 @@ begin
   end;
 end;
 
-procedure TfrmModelosXPecas.FormClose(Sender: TObject;
-  var Action: TCloseAction);
+procedure TfrmModelosXPecas.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  DM.DesconectarSQLServer;
+//  DM.DesconectarSQLServer;
+  DM.DesconectarFirebird;
   Action := caFree;
 end;
 
 procedure TfrmModelosXPecas.FormCreate(Sender: TObject);
 begin
-  dm.ConectarSQLServer(Configuracao.Servidor, Configuracao.banco, Configuracao.Usuario, Configuracao.Senha);
+//  dm.ConectarSQLServer(Configuracao.Servidor, Configuracao.banco, Configuracao.Usuario, Configuracao.Senha);
+  DM.ConectarFirebird(Configuracao.Servidor, Configuracao.banco, Configuracao.Usuario, Configuracao.Senha);
   edtPastaOrigem.Text := Configuracao.PastaOrigem;
   edtPastaDestino.Text := Configuracao.PastaDestino;
   ListarArquivos(Configuracao.PastaOrigem, True);
@@ -702,7 +659,8 @@ begin
 end;
 
 function TfrmModelosXPecas.InserirDEEPR(nDesc: Integer; codigoProduto: Integer; nomeDescritor: string): Boolean;
-var novoCodigo: Integer;
+var
+  novoCodigo: Integer;
   sp: TADOStoredProc;
   nd: string;
 begin
@@ -731,8 +689,7 @@ begin
       on e: Exception do
       begin
         result := false;
-        raise Exception.Create('Erro ao inserir DEEPR para o produto ' + IntToStr(codigoProduto) +
-          ' e descritor ' + nomeDescritor + ': ' + e.Message);
+        raise Exception.Create('Erro ao inserir DEEPR para o produto ' + IntToStr(codigoProduto) + ' e descritor ' + nomeDescritor + ': ' + e.Message);
       end;
     end;
   finally
@@ -741,7 +698,8 @@ begin
 end;
 
 function TfrmModelosXPecas.InserirNovoDescritor(nDesc: Integer; nomeDescritor: string; var codigoNovoDescritor: Integer): Boolean;
-var sp: TADOStoredProc;
+var
+  sp: TADOStoredProc;
   nd: string;
 begin
   try
@@ -788,8 +746,7 @@ begin
   end;
 end;
 
-function TfrmModelosXPecas.InserirRelacaoProdutoDescritor(nDesc: Integer; codigoProduto, codigoDescritor: Integer): Boolean;
-var nd: string;
+function TfrmModelosXPecas.InserirRelacaoProdutoDescritor(codigoProduto, codigoDescritor: Integer; modelos: string): Boolean;
 begin
   try
     try
@@ -799,10 +756,10 @@ begin
       //dm.qryInserirRelacaoDescritorProduto.Parameters.ParamByName('cod_descritor').Value := codigoDescritor;
 
       // aqui
-      nd := IntToStr(nDesc);
+
       dm.qryInserirRelacaoDescritorProduto.SQL.Clear;
-      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('INSERT INTO TCOM_DEP' + nd + 'PR (PROS_COD, DES' + nd + '_COD)');
-      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('VALUES (' + IntToStr(codigoProduto) + ', ' + IntToStr(codigoDescritor) + ')');
+      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('INSERT INTO ESPEC_PRODUTOS (PRODUTO, ESPECIFICACAO, DESCRICAO)');
+      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('VALUES (' + IntToStr(codigoProduto) + ', ' + IntToStr(codigoDescritor) + ', ' + QuotedStr(modelos) + ')');
       // até aqui
 
       dm.qryInserirRelacaoDescritorProduto.ExecSQL;
@@ -813,11 +770,11 @@ begin
       on e: Exception do
       begin
         result := false;
-        raise Exception.Create('Erro ao relacionar o produto ' + IntToStr(codigoProduto) +
-          ' ao descritor ' + IntToStr(codigoDescritor) + ': ' + e.Message);
+        raise Exception.Create('Erro ao relacionar o produto ' + IntToStr(codigoProduto) + ' a especificação de modelo ' + ': ' + e.Message);
       end;
     end;
   finally
+//    dm.qryInserirRelacaoDescritorProduto.Close;
     dm.qryInserirRelacaoDescritorProduto.Close;
   end;
 end;
@@ -853,7 +810,8 @@ begin
 end;
 
 function TfrmModelosXPecas.PegarCodigoDescritor(nDesc: Integer; nomeDescritor: string; var codigoObtido: Integer): string;
-var nd: string;
+var
+  nd: string;
 begin
   try
     result := erroNaoConhecido;
@@ -899,18 +857,16 @@ begin
   end;
 end;
 
-function TfrmModelosXPecas.PegarCodigoProduto(nDesc: Integer; codExtProduto: string; var codigoObtido: Integer): string;
-var nd: string;
+function TfrmModelosXPecas.PegarCodigoProduto(codExtProduto: string; var codigoObtido: Integer): string;
 begin
   try
     result := erroNaoConhecido;
 
     // aqui
-    nd := IntToStr(nDesc);
     dm.qryBuscaCodigoProduto.SQL.Clear;
-    dm.qryBuscaCodigoProduto.SQL.Add('SELECT PROD.PROS_COD AS COD_PRODUTO');
-    dm.qryBuscaCodigoProduto.SQL.Add('FROM TCOM_PROSER PROD');
-    dm.qryBuscaCodigoProduto.SQL.Add('WHERE LTRIM(RTRIM(PROD.PROS_EXT_COD)) = ' + #39 + codExtProduto + #39);
+    dm.qryBuscaCodigoProduto.SQL.Add('SELECT PRODUTO ');
+    dm.qryBuscaCodigoProduto.SQL.Add('FROM PRODUTOS');
+    dm.qryBuscaCodigoProduto.SQL.Add('WHERE LTRIM(RTRIM(COD_PRODUTO)) = ' + #39 + codExtProduto + #39);
     // até aqui
 
     //dm.qryBuscaCodigoProduto.Parameters.ParamByName('cod_ext_produto').Value := codExtProduto;
@@ -918,16 +874,12 @@ begin
 
     if dm.qryBuscaCodigoProduto.IsEmpty then
       codigoObtido := 0
-    else if dm.qryBuscaCodigoProduto.RecordCount > 1 then
-      codigoObtido := -1
     else
-      codigoObtido := dm.qryBuscaCodigoProduto.FieldByName('COD_PRODUTO').AsInteger;
+      codigoObtido := dm.qryBuscaCodigoProduto.FieldByName('PRODUTO').AsInteger;
 
     // Validar retorno
     if codigoObtido = 0 then
       result := produtoNaoCadastrado
-    else if codigoObtido = -1 then
-      result := cadastroProdutoDuplicado
     else
       result := correto;
 
@@ -936,32 +888,28 @@ begin
   end;
 end;
 
-function TfrmModelosXPecas.PegarProdutoAssociadoDescritor(nDesc: Integer; codProdutoAbacos, codDescritor: Integer): string;
-var nd: string;
+function TfrmModelosXPecas.PegarProdutoAssociadoDescritor(codProduto, codDescritor: Integer): Integer;
 begin
   try
-    result := erroNaoConhecido;
+    result := 0;
 
     // aqui
-    nd := IntToStr(nDesc);
     dm.qryBuscaProdutoDescritor.SQL.Clear;
-    dm.qryBuscaProdutoDescritor.SQL.Add('SELECT DP.DES' + nd + '_COD');
-    dm.qryBuscaProdutoDescritor.SQL.Add('FROM TCOM_DEP' + nd + 'PR DP');
-    dm.qryBuscaProdutoDescritor.SQL.Add('WHERE DP.DES' + nd + '_COD = ' + IntToStr(codDescritor));
-    dm.qryBuscaProdutoDescritor.SQL.Add('	AND DP.PROS_COD = ' + IntToStr(codProdutoAbacos));
+    dm.qryBuscaProdutoDescritor.SQL.Add('SELECT ESPEC_PRODUTO');
+    dm.qryBuscaProdutoDescritor.SQL.Add('FROM ESPEC_PRODUTOS');
+    dm.qryBuscaProdutoDescritor.SQL.Add('WHERE PRODUTO = ' + IntToStr(codProduto));
+    dm.qryBuscaProdutoDescritor.SQL.Add('	AND ESPECIFICACAO = ' + IntToStr(codDescritor));
     // até aquui
 
-    // dm.qryBuscaProdutoDescritor.Parameters.ParamByName('cod_produto').Value := codProdutoAbacos;
+    // dm.qryBuscaProdutoDescritor.Parameters.ParamByName('cod_produto').Value := codProduto;
     // dm.qryBuscaProdutoDescritor.Parameters.ParamByName('cod_descritor').Value := codDescritor;
 
     dm.qryBuscaProdutoDescritor.Open;
 
     if dm.qryBuscaProdutoDescritor.IsEmpty then
-      result := correto
-    else if dm.qryBuscaProdutoDescritor.RecordCount > 1 then
-      result := descritorDuplicadoParaProduto
+      result := 0
     else
-      result := descritorJaExisteParaProduto;
+      result := dm.qryBuscaProdutoDescritor.fieldbyname('ESPEC_PRODUTO').AsInteger;
 
   finally
     dm.qryBuscaProdutoDescritor.Close;
@@ -976,6 +924,52 @@ end;
 procedure TfrmModelosXPecas.SelectCell(Sender: TObject; ACol, ARow: Integer; var CanSelect: Boolean);
 begin
   linhaSelecionada := ARow;
+end;
+
+function TfrmModelosXPecas.AtualizaRelacaoProdutoDescritor(codigoModelo: Integer; modelos: string): Boolean;
+begin
+  try
+    try
+      result := false;
+      // aqui
+      dm.qryInserirRelacaoDescritorProduto.SQL.Clear;
+      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('UPDATE ESPEC_PRODUTOS SET DESCRICAO = ' + QuotedStr(modelos));
+      dm.qryInserirRelacaoDescritorProduto.SQL.ADD(' WHERE ESPEC_PRODUTO = ' + IntToStr(codigoModelo));
+      // até aqui
+
+      dm.qryInserirRelacaoDescritorProduto.ExecSQL;
+
+      result := true;
+
+    except
+      on e: Exception do
+      begin
+        result := false;
+        raise Exception.Create('Erro ao atualizar a relação do produto a especificação de modelo ' + ': ' + e.Message);
+      end;
+    end;
+  finally
+//    dm.qryInserirRelacaoDescritorProduto.Close;
+    dm.qryInserirRelacaoDescritorProduto.Close;
+  end;
+end;
+
+procedure TfrmModelosXPecas.MoverPlanilhasProcessadas;
+var
+  nomeArquivo : string;
+  t : Integer;
+begin
+  DM.DesconectaExcel; // para garantir que a conexão foi encerrada
+  for t := 0 to clbArquivos.Count - 1 do
+  begin
+    if not clbArquivos.Checked[t] then
+      Continue;
+    nomeArquivo := clbArquivos.Items.Strings[t];
+
+    MoveFile(PChar(Configuracao.PastaOrigem + nomeArquivo), PChar(Configuracao.PastaDestino + nomeArquivo));
+  end;
+  clbArquivos.Clear;
+  ListarArquivos(Configuracao.PastaOrigem, True);
 end;
 
 end.

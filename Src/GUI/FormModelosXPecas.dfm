@@ -114,7 +114,7 @@ object frmModelosXPecas: TfrmModelosXPecas
     object clbArquivos: TCheckListBox
       Left = 10
       Top = 122
-      Width = 572
+      Width = 743
       Height = 101
       Anchors = [akLeft, akTop, akRight, akBottom]
       Columns = 1
@@ -126,19 +126,6 @@ object frmModelosXPecas: TfrmModelosXPecas
       ItemHeight = 13
       ParentFont = False
       TabOrder = 2
-    end
-    object rbtDestino: TRadioGroup
-      Left = 588
-      Top = 116
-      Width = 167
-      Height = 107
-      Anchors = [akTop, akRight]
-      Caption = 'DESTINO'
-      Items.Strings = (
-        'Descritor Predefinido 1'
-        'Descritor Predefinido 2'
-        'Descritor Predefinido 3')
-      TabOrder = 3
     end
   end
   object btnLerArquivo: TButton
@@ -238,51 +225,6 @@ object frmModelosXPecas: TfrmModelosXPecas
     DesignSize = (
       298
       106)
-    object Label4: TLabel
-      Left = 8
-      Top = 26
-      Width = 245
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'CPD - Cadastro de produto duplicado'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clRed
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label5: TLabel
-      Left = 8
-      Top = 38
-      Width = 210
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'DNC - Descritor n'#227'o cadastrado'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clGreen
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label6: TLabel
-      Left = 8
-      Top = 62
-      Width = 280
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'DNP - Descritor n'#227'o associado ao produto'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clGreen
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
     object Label7: TLabel
       Left = 8
       Top = 14
@@ -292,51 +234,6 @@ object frmModelosXPecas: TfrmModelosXPecas
       Caption = 'PNC - Produto n'#227'o cadastrado'
       Font.Charset = ANSI_CHARSET
       Font.Color = clMaroon
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label8: TLabel
-      Left = 8
-      Top = 50
-      Width = 259
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'CDD - Cadastro de descritor duplicado'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clRed
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label9: TLabel
-      Left = 8
-      Top = 86
-      Width = 280
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'DDP - Descritor duplicado para o produto'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clRed
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label10: TLabel
-      Left = 8
-      Top = 74
-      Width = 280
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'DEP - Descritor j'#225' existe para o produto'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clBlue
       Font.Height = -12
       Font.Name = 'Courier New'
       Font.Style = []
@@ -461,51 +358,6 @@ object frmModelosXPecas: TfrmModelosXPecas
     DesignSize = (
       150
       106)
-    object Label11: TLabel
-      Left = 7
-      Top = 26
-      Width = 21
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'CPD'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clRed
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label12: TLabel
-      Left = 7
-      Top = 38
-      Width = 21
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'DNC'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clGreen
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label13: TLabel
-      Left = 7
-      Top = 62
-      Width = 21
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'DNP'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clGreen
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
     object label50: TLabel
       Left = 7
       Top = 14
@@ -521,156 +373,9 @@ object frmModelosXPecas: TfrmModelosXPecas
       ParentFont = False
       Transparent = True
     end
-    object Label15: TLabel
-      Left = 7
-      Top = 50
-      Width = 21
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'CDD'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clRed
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label16: TLabel
-      Left = 7
-      Top = 86
-      Width = 21
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'DDP'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clRed
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label17: TLabel
-      Left = 7
-      Top = 74
-      Width = 21
-      Height = 15
-      Anchors = [akLeft]
-      Caption = 'DEP'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clBlue
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object lblCPD: TLabel
-      Left = 50
-      Top = 26
-      Width = 91
-      Height = 15
-      Alignment = taRightJustify
-      Anchors = [akLeft]
-      AutoSize = False
-      Caption = '0'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clBlack
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object lblDNC: TLabel
-      Left = 50
-      Top = 38
-      Width = 91
-      Height = 15
-      Alignment = taRightJustify
-      Anchors = [akLeft]
-      AutoSize = False
-      Caption = '0'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clBlack
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object lblDNP: TLabel
-      Left = 50
-      Top = 62
-      Width = 91
-      Height = 15
-      Alignment = taRightJustify
-      Anchors = [akLeft]
-      AutoSize = False
-      Caption = '0'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clBlack
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
     object lblPNC: TLabel
       Left = 50
       Top = 14
-      Width = 91
-      Height = 15
-      Alignment = taRightJustify
-      Anchors = [akLeft]
-      AutoSize = False
-      Caption = '0'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clBlack
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object lblCDD: TLabel
-      Left = 50
-      Top = 50
-      Width = 91
-      Height = 15
-      Alignment = taRightJustify
-      Anchors = [akLeft]
-      AutoSize = False
-      Caption = '0'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clBlack
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object lblDDP: TLabel
-      Left = 50
-      Top = 86
-      Width = 91
-      Height = 15
-      Alignment = taRightJustify
-      Anchors = [akLeft]
-      AutoSize = False
-      Caption = '0'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clBlack
-      Font.Height = -12
-      Font.Name = 'Courier New'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object lblDEP: TLabel
-      Left = 50
-      Top = 74
       Width = 91
       Height = 15
       Alignment = taRightJustify

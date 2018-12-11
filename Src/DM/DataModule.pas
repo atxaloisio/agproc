@@ -3,18 +3,18 @@ unit DataModule;
 interface
 
 uses
-  SysUtils, Classes, DB, ADODB, Dialogs, DBXpress, SqlExpr;
+  SysUtils, Classes, DB, ADODB, Dialogs, DBXpress, SqlExpr, FMTBcd;
 
 type
   TDM = class(TDataModule)
     dbExcel: TADOConnection;
     qryPlanilha: TADOQuery;
     dbSQLServer: TADOConnection;
-    qryBuscaCodigoDescritor: TADOQuery;
-    qryBuscaCodigoProduto: TADOQuery;
-    qryBuscaProdutoDescritor: TADOQuery;
+    qryBuscaCodigoDescritor_: TADOQuery;
+    qryBuscaCodigoProduto_: TADOQuery;
+    qryBuscaProdutoDescritor_: TADOQuery;
     spInsereNovoDescritor1: TADOStoredProc;
-    qryInserirRelacaoDescritorProduto: TADOQuery;
+    qryInserirRelacaoDescritorProduto_: TADOQuery;
     spInserirDEEPR1: TADOStoredProc;
     spInsereNovoDescritor2: TADOStoredProc;
     spInsereNovoDescritor3: TADOStoredProc;
@@ -34,6 +34,10 @@ type
     qryApagarDadosBematechAccess: TADOQuery;
     qryInserirDadosBematechAccess: TADOQuery;
     dbFirebird: TSQLConnection;
+    qryBuscaCodigoDescritor: TSQLQuery;
+    qryBuscaCodigoProduto: TSQLQuery;
+    qryBuscaProdutoDescritor: TSQLQuery;
+    qryInserirRelacaoDescritorProduto: TSQLQuery;
   private
     { Private declarations }
   public
@@ -43,7 +47,9 @@ type
     Function AbrirPlanilha (nomePlanilha: String): Boolean;
     Function FecharPlanilha: Boolean;
     Function ConectarSQLServer (host, banco, usuario, senha: String): Boolean;
+    Function ConectarFirebird (host, banco, usuario, senha: String): Boolean;
     Procedure DesconectarSQLServer;
+    Procedure DesconectarFirebird;
     Function ConectarAccess (banco: String): Boolean;
     Procedure DesconectarAccess;
     Function ApagarDadosBematechAccess: Boolean;
@@ -55,21 +61,32 @@ var
 
 Const
 
-  fConnectionStringExcel : String = 'Provider=MSDASQL;' +
-                                    'Persist Security Info=False;' +
-                                    'Extended Properties="DBQ=%planilha%;' +
-                                    'DefaultDir=%diretorio%;' +
-                                    'Driver={Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)};' +
-                                    'DriverId=1046;' +
-                                    'FIL=excel 12.0;' +
-                                    'MaxBufferSize=2048;' +
-                                    'MaxScanRows=8;' +
-                                    'PageTimeout=5;' +
+//  fConnectionStringExcel : String = 'Provider=MSDASQL;' +
+//                                    'Persist Security Info=False;' +
+//                                    'Extended Properties="DBQ=%planilha%;' +
+//                                    'DefaultDir=%diretorio%;' +
+//                                    'Driver={Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)};' +
+//                                    'DriverId=1046;' +
+//                                    'FIL=excel 12.0;' +
+//                                    'MaxBufferSize=2048;' +
+//                                    'MaxScanRows=8;' +
+//                                    'PageTimeout=5;' +
+//                                    'ReadOnly=1;' +
+//                                    'SafeTransactions=0;' +
+//                                    'Threads=3;' +
+//                                    'UID=admin;' +
+//                                    'UserCommitSync=Yes;"';
+
+  fConnectionStringExcel : String = 'Provider=Microsoft.ACE.OLEDB.12.0;' +
+                                    'Data Source=%planilha%;' +
+                                    'Extended Properties="Excel 12.0 Xml;' +
+                                    'HDR=YES;' +
                                     'ReadOnly=1;' +
                                     'SafeTransactions=0;' +
                                     'Threads=3;' +
                                     'UID=admin;' +
                                     'UserCommitSync=Yes;"';
+                                    
 
   fConnectionStringSQLServer : String = 'Description=SQLServer;' +
                                         'DRIVER=SQL Server Native Client 10.0;' +
@@ -123,7 +140,7 @@ end;
 
 function TDM.ConectarExcel(diretorio, arquivo: String;
   var tabelas: TStringList): Boolean;
-var connAux, nomeTabela, aux, adicionadas: String;
+var connAux, aux, adicionadas: String;
     i: Integer;
     tabelasAux: TStringList;
 begin
@@ -131,7 +148,7 @@ begin
     dbExcel.Connected := False;
     connAux := fConnectionStringExcel;
     connAux := StringReplace(connAux, '%planilha%', diretorio + arquivo, [rfReplaceAll, rfIgnoreCase]);
-    connAux := StringReplace(connAux, '%diretorio%', diretorio, [rfReplaceAll, rfIgnoreCase]);
+//    connAux := StringReplace(connAux, '%diretorio%', diretorio, [rfReplaceAll, rfIgnoreCase]);
     dbExcel.ConnectionString := connAux;
     dbExcel.Connected := True;
 
@@ -168,6 +185,7 @@ var connAux: String;
 begin
   try
     ShowMessage(dbFirebird.Params.CommaText);
+    dbFirebird.Params.SaveToFile('c:\projetos\luciano\parametros.txt');
     dbSQLServer.Connected := False;
     connAux := fConnectionStringSQLServer;
     connAux := StringReplace(connAux, '%host%', host, [rfReplaceAll, rfIgnoreCase]);
@@ -254,4 +272,54 @@ begin
   end;
 end;
 
-end.                
+function TDM.ConectarFirebird(host, banco, usuario,
+  senha: String): Boolean;
+var connAux: TStrings;
+begin
+  try
+    connAux := dbFirebird.Params;
+//    ShowMessage(IntToStr(connAux.IndexOfName('Database')));
+//    ShowMessage(connAux.ValueFromIndex[connAux.IndexOfName('Database')]);
+
+    connAux.Values['Database'] := host + '/3050:' + banco;
+    connAux.Values['User_Name'] := usuario;
+    connAux.Values['Password'] := senha;
+
+    dbFirebird.Open;
+    if (dbFirebird.Connected) then
+    begin
+//      ShowMessage('Firebird conectado!');
+      Result := True;
+    end
+    else
+    begin
+//      ShowMessage('Firebird não conectado!');
+      Result := False;
+    end;
+
+//    dbFirebird.Params.SaveToFile('c:\projetos\luciano\parametros.txt');
+//    dbSQLServer.Connected := False;
+//    connAux := fConnectionStringSQLServer;
+//    connAux := StringReplace(connAux, '%host%', host, [rfReplaceAll, rfIgnoreCase]);
+//    connAux := StringReplace(connAux, '%banco%', banco, [rfReplaceAll, rfIgnoreCase]);
+//    connAux := StringReplace(connAux, '%usuario%', usuario, [rfReplaceAll, rfIgnoreCase]);
+//    connAux := StringReplace(connAux, '%senha%', senha, [rfReplaceAll, rfIgnoreCase]);
+//    dbSQLServer.ConnectionString := connAux;
+//    dbSQLServer.Connected := True;
+//    result := True;
+  except
+    On e : Exception do
+    begin
+      Raise Exception.Create('Erro na conexão com o Firebird: ' + e.Message);
+      dbFirebird.Connected := False;
+      result := False;
+    end;
+  end;
+end;
+
+procedure TDM.DesconectarFirebird;
+begin
+  Self.dbFirebird.Close;
+end;
+
+end.
