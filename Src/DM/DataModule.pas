@@ -160,6 +160,10 @@ begin
     for i := 0 to tabelasAux.Count - 1 do
     begin
       aux := StringReplace(tabelasAux.Strings[0],#39,'"',[rfReplaceAll, rfIgnoreCase]);
+
+      if Pos('_xlnm#',aux) = 1 then
+        aux := StringReplace(tabelasAux.Strings[1],#39,'"',[rfReplaceAll, rfIgnoreCase]);
+
       if Pos(aux, adicionadas) = 0 then
       begin
         tabelas.Add (aux);
@@ -264,6 +268,10 @@ begin
   try
     qryPlanilha.Close;
     qryPlanilha.SQL.Clear;
+
+    if Pos('$',nomePlanilha) > 0 then
+     nomePlanilha := '['+nomePlanilha+']';
+
     qryPlanilha.SQL.Add('Select * From ' + nomePlanilha);
     qryPlanilha.Open;
     result := True;

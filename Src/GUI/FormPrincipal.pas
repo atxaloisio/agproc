@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ActnList, Menus;
+  Dialogs, ActnList, Menus, jpeg, ExtCtrls;
 
 type
   TfrmPrincipal = class(TForm)
@@ -20,6 +20,7 @@ type
     mnuConfiguracoes: TMenuItem;
     actCargaBematech: TAction;
     mnuCargaBematech: TMenuItem;
+    Image1: TImage;
     procedure actTesteCriptografiaExecute(Sender: TObject);
     procedure actConfiguracoesExecute(Sender: TObject);
     procedure FormCreate(Sender: TObject);

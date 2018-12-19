@@ -3,7 +3,7 @@ object frmModelosXPecas: TfrmModelosXPecas
   Top = 85
   Width = 781
   Height = 562
-  Caption = 'Associa'#231#227'o de Modelos x Pe'#231'as'
+  Caption = 'Importar Planilha de Modelos x Produtos'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

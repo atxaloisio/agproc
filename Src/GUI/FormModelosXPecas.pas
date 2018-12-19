@@ -597,7 +597,10 @@ begin
     if cancelou then
       MessageDlg('Cancelado pelo usuário!', mtInformation, [mbOk], 0)
     else if not ocorreuErro then
-      MessageDlg('Concluído!', mtInformation, [mbOk], 0)
+    begin
+      MoverPlanilhasProcessadas;
+      MessageDlg('Concluído!', mtInformation, [mbOk], 0);
+    end
     else
       MessageDlg('Concluído sem sucesso!', mtError, [mbOk], 0);
   end;
@@ -958,6 +961,7 @@ procedure TfrmModelosXPecas.MoverPlanilhasProcessadas;
 var
   nomeArquivo : string;
   t : Integer;
+  index: Integer;
 begin
   DM.DesconectaExcel; // para garantir que a conexão foi encerrada
   for t := 0 to clbArquivos.Count - 1 do
@@ -969,7 +973,14 @@ begin
     MoveFile(PChar(Configuracao.PastaOrigem + nomeArquivo), PChar(Configuracao.PastaDestino + nomeArquivo));
   end;
   clbArquivos.Clear;
+  while pcPlanilhas.PageCount > 0 do
+  begin
+    pcPlanilhas.Pages[0].Destroy;
+    pbProcessamento.Position := pbProcessamento.Position + 1;
+    Application.ProcessMessages;
+  end;
   ListarArquivos(Configuracao.PastaOrigem, True);
+  clbArquivos.Enabled := True;
 end;
 
 end.
