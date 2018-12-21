@@ -59,6 +59,7 @@ type
     function TemAtributo(Attr, Val: Integer): Boolean;
     function PegarCodigoDescritor(nDesc: Integer; nomeDescritor: string; var codigoObtido: Integer): string;
     function PegarCodigoProduto(codExtProduto: string; var codigoObtido: Integer): string;
+    function getModelosDB(codMods: Integer) : string;
     function PegarProdutoAssociadoDescritor(codProduto, codDescritor: Integer): Integer;
     function InserirNovoDescritor(nDesc: Integer; nomeDescritor: string; var codigoNovoDescritor: Integer): Boolean;
     function InserirRelacaoProdutoDescritor(codigoProduto, codigoDescritor: Integer; modelos: string): Boolean;
@@ -310,7 +311,7 @@ begin
                 end;
 
                 codigo := qryPlanilha.Fields.FieldByNumber(1).AsString;
-                descricao := Trim(qryPlanilha.Fields.FieldByNumber(2).AsString);
+                descricao := qryPlanilha.Fields.FieldByNumber(2).AsString;
                 modelos := qryPlanilha.Fields.FieldByNumber(3).AsString;
 
                 peca := TProduto.Create(codigo, descricao, modelos);
@@ -453,6 +454,8 @@ var
   produto: TProduto;
   ocorreuErro: Boolean;
   Trans : TTransactionDesc;
+  listaMDLPlan, listaMDLDB, listaGrava: TStringList;
+  index, idxFind : Integer;
 begin
   try
     try
@@ -541,17 +544,47 @@ begin
             if produto.CodigoModelo = 0 then
             begin
               //se não temos a associação espec_prod vamos inserir
+//            COMENTADO TEMPORARIAMENTE ATÉ DEFINIÇÃO DO TRATAMENTO DO AUTO-INCREMENTO ESPE_PRODUTO  
 
               DM.dbFirebird.StartTransaction(Trans);
-              if InserirRelacaoProdutoDescritor(produto.Codigo, 7, produto.Modelos) then
+              if InserirRelacaoProdutoDescritor(produto.Codigo,7, produto.Modelos) then
                 produto.CodigoModelo := PegarProdutoAssociadoDescritor(produto.Codigo, 7);
               DM.dbFirebird.Commit(Trans);
             end
             else
             begin
-              DM.dbFirebird.StartTransaction(Trans);
-              AtualizaRelacaoProdutoDescritor(produto.CodigoModelo, produto.Modelos);
-              DM.dbFirebird.Commit(Trans);
+              if produto.Modelos <> '' then
+              begin
+                DM.dbFirebird.StartTransaction(Trans);
+
+                listaMDLPlan := TStringList.Create;
+                listaMDLPlan.CommaText := produto.Modelos;
+                listaMDLPlan.Delimiter := ',';
+
+                listaMDLDB := TStringList.Create;
+                listaMDLDB.CommaText := getModelosDB(produto.CodigoModelo);
+                listaMDLDB.Delimiter := ',';
+
+                listaGrava := TStringList.Create;
+                listaGrava.Delimiter := ',';
+
+                for index := 0 to pred(listaMDLPlan.Count) do
+                begin
+                  if not listaMDLDB.Find(listaMDLPlan.Strings[index],idxFind) then
+                    listaGrava.Add(listaMDLPlan.Strings[index]);
+                end;
+
+                if listaGrava.Count > 0 then
+                begin
+                  AtualizaRelacaoProdutoDescritor(produto.CodigoModelo, listaGrava.CommaText);
+                end;
+
+                DM.dbFirebird.Commit(Trans);
+                FreeAndNil(listaGrava);
+                FreeAndNil(listaMDLDB);
+                FreeAndNil(listaMDLPlan);
+              end;
+
             end;
 //            for nModelo := 0 to produto.Modelos.Count - 1 do
 //            begin
@@ -761,8 +794,8 @@ begin
       // aqui
 
       dm.qryInserirRelacaoDescritorProduto.SQL.Clear;
-      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('INSERT INTO ESPEC_PRODUTOS (PRODUTO, ESPECIFICACAO, DESCRICAO)');
-      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('VALUES (' + IntToStr(codigoProduto) + ', ' + IntToStr(codigoDescritor) + ', ' + QuotedStr(modelos) + ')');
+      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('INSERT INTO ESPEC_PRODUTOS (ESPEC_PRODUTO, PRODUTO, ESPECIFICACAO, DESCRICAO)');
+      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('VALUES ((SELECT MAX(ESPEC_PRODUTO) + 1 FROM ESPEC_PRODUTOS),' + IntToStr(codigoProduto) + ', ' + IntToStr(codigoDescritor) + ', ' + QuotedStr(modelos) + ')');
       // até aqui
 
       dm.qryInserirRelacaoDescritorProduto.ExecSQL;
@@ -936,7 +969,8 @@ begin
       result := false;
       // aqui
       dm.qryInserirRelacaoDescritorProduto.SQL.Clear;
-      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('UPDATE ESPEC_PRODUTOS SET DESCRICAO = ' + QuotedStr(modelos));
+      modelos := ', ' + modelos;
+      dm.qryInserirRelacaoDescritorProduto.SQL.ADD('UPDATE ESPEC_PRODUTOS SET DESCRICAO = DESCRICAO ||' + QuotedStr(modelos));
       dm.qryInserirRelacaoDescritorProduto.SQL.ADD(' WHERE ESPEC_PRODUTO = ' + IntToStr(codigoModelo));
       // até aqui
 
@@ -964,14 +998,18 @@ var
   index: Integer;
 begin
   DM.DesconectaExcel; // para garantir que a conexão foi encerrada
-  for t := 0 to clbArquivos.Count - 1 do
+  if Configuracao.MoverArquivos then
   begin
-    if not clbArquivos.Checked[t] then
-      Continue;
-    nomeArquivo := clbArquivos.Items.Strings[t];
+    for t := 0 to clbArquivos.Count - 1 do
+    begin
+      if not clbArquivos.Checked[t] then
+        Continue;
+      nomeArquivo := clbArquivos.Items.Strings[t];
 
-    MoveFile(PChar(Configuracao.PastaOrigem + nomeArquivo), PChar(Configuracao.PastaDestino + nomeArquivo));
+      MoveFile(PChar(Configuracao.PastaOrigem + nomeArquivo), PChar(Configuracao.PastaDestino + nomeArquivo));
+    end;
   end;
+
   clbArquivos.Clear;
   while pcPlanilhas.PageCount > 0 do
   begin
@@ -981,6 +1019,29 @@ begin
   end;
   ListarArquivos(Configuracao.PastaOrigem, True);
   clbArquivos.Enabled := True;
+end;
+
+function TfrmModelosXPecas.getModelosDB(codMods: Integer): string;
+var
+  retorno : string;
+begin
+  retorno := '';
+  try
+    DM.qryBuscaDescricaoModelo.Close;
+    DM.qryBuscaDescricaoModelo.SQL.Clear;
+    DM.qryBuscaDescricaoModelo.SQL.Text := 'SELECT DESCRICAO FROM ESPEC_PRODUTOS WHERE ESPEC_PRODUTO = ' + IntToStr(codMods);
+    DM.qryBuscaDescricaoModelo.Open;
+
+    if DM.qryBuscaDescricaoModelo.IsEmpty then
+      retorno := ''
+    else
+      retorno := DM.qryBuscaDescricaoModelo.fieldbyname('DESCRICAO').AsString;
+
+    Result := retorno;
+  finally
+    DM.qryBuscaDescricaoModelo.Close;
+  end;
+
 end;
 
 end.

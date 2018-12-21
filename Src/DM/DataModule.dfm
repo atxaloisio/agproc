@@ -608,4 +608,11 @@ object DM: TDM
     Left = 608
     Top = 80
   end
+  object qryBuscaDescricaoModelo: TSQLQuery
+    MaxBlobSize = -1
+    Params = <>
+    SQLConnection = dbFirebird
+    Left = 608
+    Top = 152
+  end
 end
