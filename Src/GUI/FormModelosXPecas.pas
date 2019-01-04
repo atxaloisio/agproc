@@ -969,7 +969,7 @@ begin
       result := false;
       // aqui
       dm.qryInserirRelacaoDescritorProduto.SQL.Clear;
-      modelos := ', ' + modelos;
+      modelos := ',' + modelos;
       dm.qryInserirRelacaoDescritorProduto.SQL.ADD('UPDATE ESPEC_PRODUTOS SET DESCRICAO = DESCRICAO ||' + QuotedStr(modelos));
       dm.qryInserirRelacaoDescritorProduto.SQL.ADD(' WHERE ESPEC_PRODUTO = ' + IntToStr(codigoModelo));
       // até aqui

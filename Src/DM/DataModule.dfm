@@ -615,4 +615,25 @@ object DM: TDM
     Left = 608
     Top = 152
   end
+  object qryModeloContagem: TSQLQuery
+    MaxBlobSize = -1
+    Params = <>
+    SQLConnection = dbFirebird
+    Left = 608
+    Top = 232
+  end
+  object qryRemoveEspcaoModelos: TSQLQuery
+    MaxBlobSize = -1
+    Params = <>
+    SQLConnection = dbFirebird
+    Left = 608
+    Top = 288
+  end
+  object qryObterTodosModelosDB: TSQLQuery
+    MaxBlobSize = -1
+    Params = <>
+    SQLConnection = dbFirebird
+    Left = 736
+    Top = 232
+  end
 end

@@ -394,4 +394,12 @@ object frmConfiguracoes: TfrmConfiguracoes
       Spacing = 0
     end
   end
+  object Button1: TButton
+    Left = 4
+    Top = 321
+    Width = 219
+    Height = 25
+    Caption = 'Corrigir espa'#231'os em branco dos modelos'
+    TabOrder = 5
+  end
 end

@@ -39,6 +39,9 @@ type
     qryBuscaProdutoDescritor: TSQLQuery;
     qryInserirRelacaoDescritorProduto: TSQLQuery;
     qryBuscaDescricaoModelo: TSQLQuery;
+    qryModeloContagem: TSQLQuery;
+    qryRemoveEspcaoModelos: TSQLQuery;
+    qryObterTodosModelosDB: TSQLQuery;
   private
     { Private declarations }
   public

@@ -17,7 +17,8 @@ uses
   Constantes in 'Constantes.pas',
   CargaBematech in 'CargaBematech.pas' {frmCargaBematech},
   Funcoes in 'Funcoes.pas',
-  Hashes in 'Hashes.pas';
+  Hashes in 'Hashes.pas',
+  FormRemoveEspacoModelos in 'GUI\FormRemoveEspacoModelos.pas' {frmUtilRemoveEspacoBase};
 
 {$R *.res}
 

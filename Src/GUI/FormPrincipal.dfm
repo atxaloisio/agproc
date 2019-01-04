@@ -4924,6 +4924,10 @@ object frmPrincipal: TfrmPrincipal
         Action = actTesteCriptografia
         Visible = False
       end
+      object menucorrigirespaco: TMenuItem
+        Caption = 'Corrigir espa'#231'os em branco de modelos do Banco de Dados'
+        OnClick = menucorrigirespacoClick
+      end
     end
   end
   object ActionList1: TActionList

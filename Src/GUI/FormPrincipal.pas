@@ -21,11 +21,13 @@ type
     actCargaBematech: TAction;
     mnuCargaBematech: TMenuItem;
     Image1: TImage;
+    menucorrigirespaco: TMenuItem;
     procedure actTesteCriptografiaExecute(Sender: TObject);
     procedure actConfiguracoesExecute(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure actModelosXPecasExecute(Sender: TObject);
     procedure actCargaBematechExecute(Sender: TObject);
+    procedure menucorrigirespacoClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -39,7 +41,7 @@ implementation
 
 
 uses FormCriptografia, FormConfiguracoes, FormModelosXPecas, Configuracoes,
-  DataModule, CargaBematech;
+  DataModule, CargaBematech, FormRemoveEspacoModelos;
 
 {$R *.dfm}
 
@@ -74,6 +76,15 @@ begin
   begin
     MessageDlg ('Não foi possível carregar o arquivo de configuração.', mtError, [mbOk], 0);
     Application.Terminate;
+  end;
+end;
+
+procedure TfrmPrincipal.menucorrigirespacoClick(Sender: TObject);
+begin
+  if MessageDlg('Deseja realmente remover os espaços em branco'+ #13 +' dos Modelos gravados na Base?',mtConfirmation, [mbYes, mbNo],0) = mrYes then
+  begin
+    frmUtilRemoveEspacoBase:= TfrmUtilRemoveEspacoBase.Create(Application);
+    frmUtilRemoveEspacoBase.processarRegistros;
   end;
 end;
 
