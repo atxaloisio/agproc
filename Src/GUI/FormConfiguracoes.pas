@@ -31,7 +31,6 @@ type
     Label7: TLabel;
     edtDestinoLogsImportacao: TEdit;
     btnSelArquivoAccess: TBitBtn;
-    Button1: TButton;
     procedure btnCancelarClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);

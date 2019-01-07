@@ -22,12 +22,14 @@ type
     mnuCargaBematech: TMenuItem;
     Image1: TImage;
     menucorrigirespaco: TMenuItem;
+    mnuRemoverDuplicados: TMenuItem;
     procedure actTesteCriptografiaExecute(Sender: TObject);
     procedure actConfiguracoesExecute(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure actModelosXPecasExecute(Sender: TObject);
     procedure actCargaBematechExecute(Sender: TObject);
     procedure menucorrigirespacoClick(Sender: TObject);
+    procedure mnuRemoverDuplicadosClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -85,6 +87,15 @@ begin
   begin
     frmUtilRemoveEspacoBase:= TfrmUtilRemoveEspacoBase.Create(Application);
     frmUtilRemoveEspacoBase.processarRegistros;
+  end;
+end;
+
+procedure TfrmPrincipal.mnuRemoverDuplicadosClick(Sender: TObject);
+begin
+  if MessageDlg('Deseja realmente remover os registros duplicados'+ #13 +' dos Modelos gravados na Base?',mtConfirmation, [mbYes, mbNo],0) = mrYes then
+  begin
+    frmUtilRemoveEspacoBase:= TfrmUtilRemoveEspacoBase.Create(Application);
+    frmUtilRemoveEspacoBase.removerRegistrosDuplicados;
   end;
 end;
 

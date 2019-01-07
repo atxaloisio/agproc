@@ -570,7 +570,7 @@ begin
 
                 for index := 0 to pred(listaMDLPlan.Count) do
                 begin
-                  if not listaMDLDB.Find(listaMDLPlan.Strings[index],idxFind) then
+                  if listaMDLDB.IndexOf(listaMDLPlan.Strings[index]) = -1 then
                     listaGrava.Add(listaMDLPlan.Strings[index]);
                 end;
 

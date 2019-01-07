@@ -4928,6 +4928,10 @@ object frmPrincipal: TfrmPrincipal
         Caption = 'Corrigir espa'#231'os em branco de modelos do Banco de Dados'
         OnClick = menucorrigirespacoClick
       end
+      object mnuRemoverDuplicados: TMenuItem
+        Caption = 'Remover modelos duplicados do Banco de Bados'
+        OnClick = mnuRemoverDuplicadosClick
+      end
     end
   end
   object ActionList1: TActionList
